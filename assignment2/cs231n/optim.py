@@ -65,14 +65,44 @@ def sgd_momentum(w, dw, config=None):
     # TODO: Implement the momentum update formula. Store the updated value in #
     # the next_w variable. You should also use and update the velocity v.     #
     ###########################################################################
-    pass
+    v = config['momentum'] *v -config['learning_rate']*dw
+    next_w = w + v
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
     config['velocity'] = v
 
     return next_w, config
+def sgd_netstrov_momentum(w, dw, config=None):#add new optim
+    """
+    Performs stochastic gradient descent with momentum.
 
+    config format:
+    - learning_rate: Scalar learning rate.
+    - momentum: Scalar between 0 and 1 giving the momentum value.
+      Setting momentum = 0 reduces to sgd.
+    - velocity: A numpy array of the same shape as w and dw used to store a
+      moving average of the gradients.
+    """
+    if config is None: config = {}
+    config.setdefault('learning_rate', 1e-2)
+    config.setdefault('momentum', 0.9)
+    v = config.get('velocity', np.zeros_like(w))
+
+    next_w = None
+    ###########################################################################
+    # TODO: Implement the momentum update formula. Store the updated value in #
+    # the next_w variable. You should also use and update the velocity v.     #
+    ###########################################################################
+    v_prev = v
+    v = config['momentum'] *v -config['learning_rate']*dw
+    w += -config['momentum'] *v_prev + (1+config['momentum'])*v
+    ###########################################################################
+    #                             END OF YOUR CODE                            #
+    ###########################################################################
+    config['velocity'] = v
+
+    return w, config
 
 
 def rmsprop(w, dw, config=None):
@@ -99,7 +129,9 @@ def rmsprop(w, dw, config=None):
     # in the next_w variable. Don't forget to update cache value stored in    #
     # config['cache'].                                                        #
     ###########################################################################
-    pass
+    decay_rate = config['decay_rate']
+    config['cache'] = config['cache'] *decay_rate +(1-decay_rate ) * np.square(dw)
+    next_w = w- config['learning_rate']*dw/(np.sqrt(config['cache'])+config['epsilon'])
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
@@ -139,7 +171,12 @@ def adam(w, dw, config=None):
     # NOTE: In order to match the reference output, please modify t _before_  #
     # using it in any calculations.                                           #
     ###########################################################################
-    pass
+    config['t'] += 1
+    config['m'] = config['beta1']*config['m']+(1- config['beta1'])*dw
+    mt = config['m']/(1-config['beta1']**config['t'])
+    config['v'] = config['beta2']*config['v']+(1- config['beta2'])*(dw**2)
+    vt = config['v']/(1-config['beta2']**config['t'])
+    next_w = w - config['learning_rate']* mt /(np.sqrt(vt)+config['epsilon'])
     ###########################################################################
     #                             END OF YOUR CODE                            #
     ###########################################################################
